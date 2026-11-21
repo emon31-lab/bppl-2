@@ -1,0 +1,41 @@
+{
+  "name": "bppl-session-02",
+  "version": "2.0.0",
+  "description": "Bepari Para Premier League - Session 02 | Tournament Management App with MongoDB Atlas",
+  "main": "server.js",
+  "author": "BPPL",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongodb": "^6.5.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "bppl",
+    "tournament",
+    "football",
+    "express",
+    "mongodb",
+    "atlas",
+    "premier-league"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/bppl-session-02.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/bppl-session-02/issues"
+  },
+  "homepage": "https://github.com/your-username/bppl-session-02#readme"
+}

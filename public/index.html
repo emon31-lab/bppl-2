@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#070d19">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>BPPL Session-02</title>
+<link rel="stylesheet" href="style.css">
+
+<!-- ═════════ PRINT STYLES (Watermark + Logo) ═════════ -->
+<style id="printStyles">
+#printArea { display: none; }
+@media print {
+  body > *:not(#printArea) { display: none !important; }
+  body > #printArea { display: block !important; }
+  html, body { background: #fff !important; color: #111 !important; margin: 0; padding: 0; }
+  #printArea {
+    position: relative;
+    padding: 18mm 14mm;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    color: #111;
+    background: #fff;
+    min-height: 100vh;
+  }
+  #printArea .print-watermark {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) rotate(-30deg);
+    font-size: 140px;
+    font-weight: 900;
+    color: rgba(0,0,0,0.05);
+    pointer-events: none;
+    z-index: 0;
+    letter-spacing: 8px;
+    font-family: sans-serif;
+    text-align: center;
+    line-height: 1;
+  }
+  #printArea .print-watermark::before { content: "BPPL"; display: block; }
+  #printArea .print-watermark::after { content: "SESSION 02"; display: block; font-size: 52px; margin-top: 5px; }
+  #printArea .print-watermark-2 {
+    position: fixed;
+    top: 15%; left: 10%;
+    transform: rotate(-25deg);
+    font-size: 60px;
+    font-weight: 900;
+    color: rgba(245,197,66,0.08);
+    pointer-events: none;
+    z-index: 0;
+    font-family: sans-serif;
+  }
+  #printArea .print-watermark-3 {
+    position: fixed;
+    bottom: 10%; right: 8%;
+    transform: rotate(-25deg);
+    font-size: 60px;
+    font-weight: 900;
+    color: rgba(245,197,66,0.08);
+    pointer-events: none;
+    z-index: 0;
+    font-family: sans-serif;
+  }
+  #printArea * { position: relative; z-index: 1; }
+  #printArea .p-header { text-align: center; border-bottom: 3px double #333; padding-bottom: 14px; margin-bottom: 22px; }
+  #printArea .p-logo { width: 90px; height: 90px; object-fit: contain; margin-bottom: 8px; }
+  #printArea .p-header h1 { font-size: 26px; letter-spacing: 3px; margin: 5px 0; font-family: sans-serif; }
+  #printArea .p-header p { font-size: 13px; margin: 3px 0; letter-spacing: 2px; font-family: sans-serif; }
+  #printArea .p-date { font-size: 10px; color: #666; margin-top: 8px !important; font-style: italic; }
+  #printArea h2 { font-size: 18px; letter-spacing: 2px; border-left: 5px solid #f5c542; padding-left: 12px; margin: 22px 0 12px; color: #111; text-transform: uppercase; font-family: sans-serif; page-break-after: avoid; }
+  #printArea .p-table { width: 100%; border-collapse: collapse; margin-bottom: 18px; page-break-inside: avoid; font-family: sans-serif; }
+  #printArea .p-table th { background: #f5f5f5; border: 1px solid #ccc; padding: 7px 5px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+  #printArea .p-table td { border: 1px solid #ddd; padding: 6px 5px; font-size: 12px; text-align: center; }
+  #printArea .p-table td:nth-child(2) { text-align: left; }
+  #printArea .p-table tr:nth-child(even) td { background: #fafafa; }
+  #printArea .p-table .qual td { background: #eff6ff !important; }
+  #printArea .p-ko-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; page-break-inside: avoid; font-family: sans-serif; }
+  #printArea .p-ko-box { border: 2px solid #333; border-radius: 6px; padding: 10px; page-break-inside: avoid; }
+  #printArea .p-ko-box h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-bottom: 6px; text-align: center; }
+  #printArea .p-ko-match { display: flex; justify-content: space-between; padding: 4px 0; font-size: 11px; border-bottom: 1px dashed #ddd; }
+  #printArea .p-ko-match:last-child { border-bottom: none; }
+  #printArea .p-champ { text-align: center; margin-top: 25px; padding: 18px; border: 3px double #f5c542; background: #fffbeb; page-break-inside: avoid; border-radius: 8px; }
+  #printArea .p-champ .trophy { font-size: 36px; }
+  #printArea .p-champ h2 { border: none; padding: 0; font-size: 20px; color: #b45309; margin: 6px 0; }
+  #printArea .p-footer { text-align: center; font-size: 9px; color: #666; margin-top: 25px; padding-top: 12px; border-top: 1px solid #ccc; letter-spacing: 1px; font-family: sans-serif; }
+  @page { margin: 0; size: A4; }
+}
+</style>
+<!-- ═════════ END PRINT STYLES ═════════ -->
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-left">
+    <button id="logoBtn" class="logo-box">
+      <img src="logo.jpeg" alt="BPPL" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'logo-fallback',textContent:'⚽'}))">
+    </button>
+    <div>
+      <h1 class="brand">Bepari Para Premier League</h1>
+      <p class="brand-sub" id="statusText">Session - 02</p>
+    </div>
+  </div>
+  <button id="soundBtn" class="sound-btn" aria-label="Sound">🔊</button>
+</header>
+
+<main id="main">
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- STANDINGS TAB                              -->
+  <!-- ═══════════════════════════════════════════ -->
+  <section id="tab-standings" class="tab">
+    <div id="pending" class="card pending">
+      <div class="pending-icon">⏳</div>
+      <h2>Draw Pending</h2>
+      <p>Standings will appear once the admin approves the groups.</p>
+    </div>
+
+    <div id="approved" class="hidden">
+      <div class="row-between">
+        <div>
+          <h2 class="h2">Standings</h2>
+          <p class="muted tiny">Win 3 · Draw (Tie-breaker) · Top 4 → Quarter Finals</p>
+        </div>
+        <button id="shareBtn" class="btn-ghost">Share</button>
+      </div>
+
+      <div class="card group-card border-emerald">
+        <div class="group-head">
+          <span class="dot emerald"></span><h3>Group A</h3>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl"><thead><tr>
+            <th class="tl">Club</th><th>MP</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th>
+          </tr></thead><tbody id="bodyA"></tbody></table>
+        </div>
+      </div>
+
+      <div class="card group-card border-amber">
+        <div class="group-head">
+          <span class="dot amber"></span><h3>Group B</h3>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl"><thead><tr>
+            <th class="tl">Club</th><th>MP</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th>
+          </tr></thead><tbody id="bodyB"></tbody></table>
+        </div>
+      </div>
+
+      <!-- ═════════ TOP SCORERS SECTION ═════════ -->
+      <div class="card">
+        <div class="group-head">
+          <span class="dot" style="background:#f5c542; box-shadow: 0 0 8px #f5c542;"></span>
+          <h3>Top Scorers</h3>
+        </div>
+        <div id="topScorersList">
+          <!-- Scorers will be injected here via JS -->
+        </div>
+      </div>
+      <!-- ═════════ END TOP SCORERS SECTION ═════════ -->
+
+      <!-- Round of 8 Section (auto-injected by JS) will appear after Group B -->
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SCHEDULE TAB                               -->
+  <!-- ═══════════════════════════════════════════ -->
+  <section id="tab-schedule" class="tab hidden">
+    <div class="row-between">
+      <div>
+        <h2 class="h2">Match Schedule</h2>
+        <p class="muted tiny">Live scores & fixtures</p>
+      </div>
+      <span id="schedCount" class="pill">0</span>
+    </div>
+    <div class="filters" id="filters">
+      <button data-f="ALL" class="filter active">All</button>
+      <button data-f="LIVE" class="filter">Live</button>
+      <button data-f="A" class="filter">A</button>
+      <button data-f="B" class="filter">B</button>
+      <button data-f="KO" class="filter">KO</button>
+      <button data-f="FT" class="filter">Results</button>
+    </div>
+    <div id="matchList"></div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- ROADMAP TAB                                -->
+  <!-- ═══════════════════════════════════════════ -->
+  <section id="tab-roadmap" class="tab hidden">
+    <h2 class="h2">Roadmap</h2>
+    <div id="roadmap"></div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- TEAMS TAB                                  -->
+  <!-- ═══════════════════════════════════════════ -->
+  <section id="tab-teams" class="tab hidden">
+    <h2 class="h2">Teams</h2>
+    <p class="muted tiny" style="margin-bottom:10px">Tap any team to view full squad & stats</p>
+    <div id="teamList"></div>
+  </section>
+
+</main>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- BOTTOM NAVIGATION                          -->
+<!-- ═══════════════════════════════════════════ -->
+<nav class="nav">
+  <button data-tab="standings" class="nav-item active">
+    <span class="nav-ico">📊</span><span class="nav-lbl">Standings</span>
+  </button>
+  <button data-tab="schedule" class="nav-item">
+    <span class="nav-ico">⚽</span><span class="nav-lbl">Schedule</span>
+  </button>
+  <button data-tab="roadmap" class="nav-item">
+    <span class="nav-ico">🏆</span><span class="nav-lbl">Roadmap</span>
+  </button>
+  <button data-tab="teams" class="nav-item">
+    <span class="nav-ico">👥</span><span class="nav-lbl">Teams</span>
+  </button>
+</nav>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TEAM DETAIL MODAL                          -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="teamModal" class="modal hidden">
+  <div class="team-detail-card">
+    <button id="teamModalClose" class="tm-close" aria-label="Close">×</button>
+
+    <div class="tm-header">
+      <div class="tm-logo" id="tmLogo"></div>
+      <div class="tm-title-wrap">
+        <h2 class="tm-name" id="tmName">Team</h2>
+        <span class="group-pill none" id="tmGroup">Unassigned</span>
+      </div>
+    </div>
+
+    <div class="tm-section">
+      <p class="tm-section-title">Formation · <span id="tmFormation" style="color:#f5c542">1-1-1-1</span></p>
+      <div class="pitch" id="tmPitch"></div>
+    </div>
+
+    <div class="tm-section">
+      <p class="tm-section-title">Squad</p>
+      <div class="player-grid" id="tmSquad"></div>
+    </div>
+
+    <div class="tm-section">
+      <p class="tm-section-title">Tournament Stats</p>
+      <div class="stat-grid" id="tmStats"></div>
+    </div>
+
+    <div class="tm-section">
+      <p class="tm-section-title">Recent Form</p>
+      <div class="form-badges" id="tmForm"></div>
+    </div>
+
+    <div class="tm-section">
+      <p class="tm-section-title">Last Match</p>
+      <div id="tmLastMatch"></div>
+    </div>
+
+    <div class="tm-section">
+      <p class="tm-section-title">Upcoming Match</p>
+      <div id="tmNextMatch"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ADMIN LOGIN MODAL                          -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="loginModal" class="modal hidden">
+  <div class="modal-card">
+    <h3>🔒 Admin Login</h3>
+    <input type="password" id="pwdInput" placeholder="Password" autocomplete="off">
+    <p id="pwdErr" class="err hidden">Wrong password</p>
+    <div class="modal-actions">
+      <button id="pwdCancel" class="btn-ghost">Cancel</button>
+      <button id="pwdOk" class="btn-gold">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- ADMIN PANEL                                -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="adminPanel" class="admin-overlay hidden">
+  <div class="admin-inner">
+    <div class="admin-hdr">
+      <div>
+        <p class="admin-lbl">Admin Control</p>
+        <h2 class="admin-title">BPPL Session-02</h2>
+      </div>
+      <button id="adminClose" class="btn-ghost">Exit</button>
+    </div>
+
+    <div class="admin-tabs">
+      <button data-atab="draw" class="atab active">Draw</button>
+      <button data-atab="matches" class="atab">Matches</button>
+      <button data-atab="db" class="atab">Data</button>
+    </div>
+
+    <!-- DRAW TAB -->
+    <div id="atab-draw" class="atab-panel">
+      <div class="card" id="drawPanel"></div>
+      <div class="card" id="unassignedPanel"></div>
+      <button id="approveBtn" class="btn-emerald hidden">✓ Approve & Generate Schedule</button>
+      <button id="resetBtn" class="btn-danger">↺ Reset Draw</button>
+    </div>
+
+    <!-- MATCHES TAB -->
+    <div id="atab-matches" class="atab-panel hidden">
+      <p class="muted tiny" style="margin-bottom: 10px;">Edit scores, add scorers & select penalty winner for draws</p>
+      <div class="filters" id="adminFilters">
+        <button data-af="ALL" class="filter active">All</button>
+        <button data-af="A" class="filter">A</button>
+        <button data-af="B" class="filter">B</button>
+        <button data-af="KO" class="filter">KO</button>
+      </div>
+      <div id="adminMatchList"></div>
+    </div>
+
+    <!-- DATA TAB (with Print) -->
+    <div id="atab-db" class="atab-panel hidden">
+      <!-- ═════════ NEW: PRINT / PDF BUTTON ═════════ -->
+      <div class="card" style="border: 1px solid rgba(245,197,66,0.4); background: linear-gradient(135deg, rgba(245,197,66,0.08), rgba(255,255,255,0.02));">
+        <h3 class="h3" style="color:#f5c542">🖨 Print Tournament Report</h3>
+        <p class="muted tiny">Watermark & logo সহ সুন্দর টুর্নামেন্ট রিপোর্ট। PDF হিসেবে সেভ করতে পারবেন।</p>
+        <button id="printBtn" class="btn-gold" style="margin-top:10px">🖨 Print / Save as PDF</button>
+      </div>
+      <!-- ═════════ END PRINT BUTTON ═════════ -->
+
+      <div class="card">
+        <h3 class="h3">Backup</h3>
+        <p class="muted tiny">State is saved on MongoDB Atlas. Download a JSON backup anytime.</p>
+        <button id="exportBtn" class="btn-gold">⬇ Export JSON</button>
+      </div>
+
+      <div class="card">
+        <h3 class="h3">Danger Zone</h3>
+        <button id="hardResetBtn" class="btn-danger">⚠ Delete All Data</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════ TOAST ═════════ -->
+<div id="toast" class="toast"></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- HIDDEN PRINT AREA (Watermark + Logo)       -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="printArea">
+  <div class="print-watermark"></div>
+  <div class="print-watermark-2">BPPL</div>
+  <div class="print-watermark-3">SESSION 02</div>
+  <div id="printContent"></div>
+</div>
+<!-- ═════════ END PRINT AREA ═════════ -->
+
+<script src="app.js"></script>
+</body>
+</html>
