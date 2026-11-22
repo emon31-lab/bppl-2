@@ -29,7 +29,7 @@
   const $ = id => document.getElementById(id);
   const teamById = id => teams.find(t => t.id === id);
 
-  /* ═════════ API (Express + MongoDB) ═════════ */
+  /* ═════════ API ═════════ */
   async function api(path, opts = {}) {
     const headers = { 'Content-Type': 'application/json' };
     if (opts.auth) headers['x-admin-token'] = token;
@@ -51,7 +51,6 @@
       const fetched = await api('/api/teams');
       teams = (fetched && fetched.length > 0) ? fetched : DEFAULT_TEAMS;
     } catch (e) {
-      console.warn("API failed, using default teams.");
       teams = DEFAULT_TEAMS;
     }
   }
@@ -79,7 +78,7 @@
     } catch(e) {}
   }
 
-  /* ═════════ STANDINGS LOGIC (with Penalty Tie-breaker) ═════════ */
+  /* ═════════ STANDINGS LOGIC (Updated: Standard Football Rules) ═════════ */
   function computeStandings(groupKey) {
     const ids = groupKey === 'A' ? state.groupA : state.groupB;
     const map = {};
@@ -96,15 +95,8 @@
         if (hs > as) { h.w++; h.pts += 3; a.l++; }
         else if (as > hs) { a.w++; a.pts += 3; h.l++; }
         else {
-          // Draw -> Penalty winner gets (Total Goals + 2), loser gets 1
-          h.d++; a.d++;
-          if (m.winnerId === m.homeId) {
-            h.w++; a.l++; h.pts += (hs + as + 2); a.pts += 1;
-          } else if (m.winnerId === m.awayId) {
-            a.w++; h.l++; a.pts += (hs + as + 2); h.pts += 1;
-          } else {
-            h.pts += 1; a.pts += 1;
-          }
+          // Standard Rule: Draw means both get 1 point. Goals are still added.
+          h.d++; a.d++; h.pts += 1; a.pts += 1;
         }
       });
     return Object.values(map)
@@ -116,7 +108,7 @@
     if (!m || m.status !== 'FT') return null;
     if (m.homeScore > m.awayScore) return hId;
     if (m.awayScore > m.homeScore) return aId;
-    return m.winnerId || null;
+    return m.winnerId || null; // Only for Knockout Stage
   }
 
   function getResolved() {
@@ -132,6 +124,7 @@
     const sf2 = state.matches.find(m => m.id === 'SF2');
     const fin = state.matches.find(m => m.id === 'FINAL');
 
+    // Admin Customization Logic: If Admin manually selects a team (homeId/awayId), use it. Else fallback to auto-calculated.
     const qf1H = qf1?.homeId || a1, qf1A = qf1?.awayId || b4;
     const qf2H = qf2?.homeId || a2, qf2A = qf2?.awayId || b3;
     const qf3H = qf3?.homeId || b1, qf3A = qf3?.awayId || a4;
@@ -177,8 +170,9 @@
       else if (as > hs) { a.w++; a.pts += 3; h.l++; }
       else {
         h.d++; a.d++;
-        if (m.winnerId === m.homeId) { h.w++; a.l++; h.pts += (hs + as + 2); a.pts += 1; }
-        else if (m.winnerId === m.awayId) { a.w++; h.l++; a.pts += (hs + as + 2); h.pts += 1; }
+        // KO Stage Tie-Breaker logic remains for QFs if needed, but standard 1 pt is fine too.
+        if (m.winnerId === m.homeId) { h.w++; a.l++; h.pts += 2; a.pts += 1; }
+        else if (m.winnerId === m.awayId) { a.w++; h.l++; a.pts += 2; h.pts += 1; }
         else { h.pts += 1; a.pts += 1; }
       }
     });
@@ -187,7 +181,6 @@
       .sort((x,y) => y.pts - x.pts || y.gd - x.gd || y.gf - x.gf);
   }
 
-  /* ═════════ TOP SCORERS ═════════ */
   function computeTopScorers() {
     const scorers = {};
     state.matches.forEach(m => {
@@ -343,8 +336,9 @@
       const center = m.status === 'UPCOMING'
         ? `<span class="time-meta">${fmtTime(m.time)}</span><span class="date-meta">${m.date || ''}</span>`
         : `<span class="score ${m.status === 'LIVE' ? 'live' : ''}">${m.homeScore} - ${m.awayScore}</span><span class="date-meta">${fmtTime(m.time)}</span>`;
+      
       let penWinner = '';
-      if (m.status === 'FT' && m.homeScore === m.awayScore && m.winnerId) {
+      if (m.stage === 'KO' && m.status === 'FT' && m.homeScore === m.awayScore && m.winnerId) {
         penWinner = `<div class="pen-winner">PEN: ${teamById(m.winnerId)?.name}</div>`;
       }
       return `<div class="match ${m.status === 'LIVE' ? 'live' : ''}">
@@ -374,13 +368,13 @@
     };
     const champ = r.champ ? teamById(r.champ) : null;
     el.innerHTML = `
-      <div class="roadmap-stage"><p class="stage-label">Quarter-Final 1 • A1 vs B4</p>${koRow(r.qf1, r.qf1H, r.qf1A, 'Group A #1', 'Group B #4')}</div>
-      <div class="roadmap-stage"><p class="stage-label">Quarter-Final 2 • A2 vs B3</p>${koRow(r.qf2, r.qf2H, r.qf2A, 'Group A #2', 'Group B #3')}</div>
-      <div class="roadmap-stage"><p class="stage-label">Quarter-Final 3 • B1 vs A4</p>${koRow(r.qf3, r.qf3H, r.qf3A, 'Group B #1', 'Group A #4')}</div>
-      <div class="roadmap-stage"><p class="stage-label">Quarter-Final 4 • B2 vs A3</p>${koRow(r.qf4, r.qf4H, r.qf4A, 'Group B #2', 'Group A #3')}</div>
-      <div class="roadmap-stage"><p class="stage-label">Semi-Final 1 • W-QF1 vs W-QF2</p>${koRow(r.sf1, r.sf1H, r.sf1A, 'Winner QF1', 'Winner QF2')}</div>
-      <div class="roadmap-stage"><p class="stage-label">Semi-Final 2 • W-QF3 vs W-QF4</p>${koRow(r.sf2, r.sf2H, r.sf2A, 'Winner QF3', 'Winner QF4')}</div>
-      <div class="roadmap-stage"><p class="stage-label">🏆 Grand Final</p>${koRow(r.fin, r.finH, r.finA, 'Winner SF1', 'Winner SF2')}</div>
+      <div class="roadmap-stage"><p class="stage-label">Quarter-Final 1</p>${koRow(r.qf1, r.qf1H, r.qf1A, 'TBD', 'TBD')}</div>
+      <div class="roadmap-stage"><p class="stage-label">Quarter-Final 2</p>${koRow(r.qf2, r.qf2H, r.qf2A, 'TBD', 'TBD')}</div>
+      <div class="roadmap-stage"><p class="stage-label">Quarter-Final 3</p>${koRow(r.qf3, r.qf3H, r.qf3A, 'TBD', 'TBD')}</div>
+      <div class="roadmap-stage"><p class="stage-label">Quarter-Final 4</p>${koRow(r.qf4, r.qf4H, r.qf4A, 'TBD', 'TBD')}</div>
+      <div class="roadmap-stage"><p class="stage-label">Semi-Final 1</p>${koRow(r.sf1, r.sf1H, r.sf1A, 'TBD', 'TBD')}</div>
+      <div class="roadmap-stage"><p class="stage-label">Semi-Final 2</p>${koRow(r.sf2, r.sf2H, r.sf2A, 'TBD', 'TBD')}</div>
+      <div class="roadmap-stage"><p class="stage-label">🏆 Grand Final</p>${koRow(r.fin, r.finH, r.finA, 'TBD', 'TBD')}</div>
       <div class="champion" ${champ ? `data-team-id="${champ.id}"` : ''}>
         <p style="font-size:9px;font-weight:800;color:#f5c542;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Session-02 Champion</p>
         ${champ ? `<img src="${champ.logo}" alt="" onerror="this.style.display='none'"><h3>${champ.name}</h3><p>${champ.players.map(p => p.name).join(' • ')}</p>` : `<div style="font-size:32px;margin:6px 0">🏆</div><p>To be crowned</p>`}
@@ -444,6 +438,7 @@
     panel.querySelectorAll('[data-assign]').forEach(b => b.addEventListener('click', () => assign(b.dataset.team, b.dataset.assign)));
   }
 
+  /* ✅ Admin Matches with Team Customization (Roadmap Customization) */
   function renderAdminMatches() {
     const list = $('adminMatchList');
     if (!state.approved) {
@@ -460,28 +455,47 @@
         const map = { QF1: [r.qf1H, r.qf1A], QF2: [r.qf2H, r.qf2A], QF3: [r.qf3H, r.qf3A], QF4: [r.qf4H, r.qf4A], SF1: [r.sf1H, r.sf1A], SF2: [r.sf2H, r.sf2A], FINAL: [r.finH, r.finA] };
         [hId, aId] = map[m.id] || [null, null];
       }
-      const ht = teamById(hId), at = teamById(aId);
+      
       const title = m.group === 'KO' ? m.label : `Match #${m.matchNo} • Group ${m.group}`;
       const isDraw = m.status === 'FT' && m.homeScore === m.awayScore;
       const scorerStr = m.scorers ? m.scorers.map(s => s.name).join(', ') : '';
 
+      const teamOptions = (selectedId) => teams.map(t => 
+        `<option value="${t.id}" ${selectedId === t.id ? 'selected' : ''}>${t.name}</option>`
+      ).join('');
+
       return `<div class="amatch">
-        <div class="amatch-head"><span class="amatch-title">${title}</span><span style="font-size:9px;color:#94a3b8;font-weight:700">#${m.matchNo}</span></div>
-        <div style="display:flex;justify-content:space-between;gap:4px;font-size:10px;font-weight:700;margin-bottom:5px">
-          <span style="color:#f8fafc;flex:1">${ht?.name || 'TBD'}</span>
-          <span style="color:#f8fafc;flex:1;text-align:right">${at?.name || 'TBD'}</span>
+        <div class="amatch-head">
+          <span class="amatch-title">${title}</span>
+          <span style="font-size:9px;color:#94a3b8;font-weight:700">#${m.matchNo}</span>
         </div>
+        
+        <!-- টিম কাস্টমাইজেশন ড্রপডাউন (রোডম্যাপের জন্য) -->
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:8px">
+          <select class="aselect" style="padding: 6px; font-size: 11px; width: 45%; margin-bottom: 0;" data-mid="${m.id}" data-f="homeId">
+            <option value="">TBD</option>
+            ${teamOptions(hId)}
+          </select>
+          <span style="color:#94a3b8;font-weight:900;font-size:10px">VS</span>
+          <select class="aselect" style="padding: 6px; font-size: 11px; width: 45%; margin-bottom: 0;" data-mid="${m.id}" data-f="awayId">
+            <option value="">TBD</option>
+            ${teamOptions(aId)}
+          </select>
+        </div>
+
         <div class="ascore">
           <input type="number" min="0" value="${m.homeScore}" data-mid="${m.id}" data-f="homeScore">
           <span style="color:#94a3b8;font-weight:800">:</span>
           <input type="number" min="0" value="${m.awayScore}" data-mid="${m.id}" data-f="awayScore">
         </div>
-        ${isDraw ? `
+        
+        ${(isDraw && m.stage === 'KO') ? `
         <select class="aselect" data-mid="${m.id}" data-f="winnerId">
           <option value="">Penalty Winner (Tie-Breaker)</option>
-          <option value="${hId}" ${m.winnerId === hId ? 'selected' : ''}>${ht?.name} Wins</option>
-          <option value="${aId}" ${m.winnerId === aId ? 'selected' : ''}>${at?.name} Wins</option>
+          <option value="${hId}" ${m.winnerId === hId ? 'selected' : ''}>${teamById(hId)?.name || 'Home'} Wins</option>
+          <option value="${aId}" ${m.winnerId === aId ? 'selected' : ''}>${teamById(aId)?.name || 'Away'} Wins</option>
         </select>` : ''}
+        
         <input type="text" class="scorer-input" placeholder="Scorers (comma separated)" value="${scorerStr}" data-mid="${m.id}" data-f="scorers">
         <select class="aselect" data-mid="${m.id}" data-f="status">
           <option value="UPCOMING" ${m.status === 'UPCOMING' ? 'selected' : ''}>Upcoming</option>
@@ -542,10 +556,9 @@
       gf += my; ga += op;
       if (my > op) { w++; pts += 3; form.push('W'); }
       else if (my < op) { l++; form.push('L'); }
-      else {
-        if (m.winnerId === teamId) { w++; pts += (my + op + 2); form.push('W'); }
-        else if (m.winnerId && m.winnerId !== teamId) { l++; pts += 1; form.push('L'); }
-        else { d++; pts += 1; form.push('D'); }
+      else { 
+        // Updated standard rules
+        d++; pts += 1; form.push('D'); 
       }
     });
     return { groupKey, mp: played.length, w, d, l, gf, ga, gd: gf - ga, pts, form: form.slice(-5), lastMatch: played.length ? played[played.length - 1] : null, nextMatch: upcoming.length ? upcoming[0] : null };
@@ -557,7 +570,7 @@
     const amf = p.find(player => player.role === 'AMF');
     const cb = p.find(player => player.role === 'CB');
     const gk = p.find(player => player.role === 'GK');
-    const cell = (player, roleLabel) => !player ? '' : `<div class="pitch-player ${player.captain ? 'captain' : ''}">${playerAvatar(player)}<span class="pitch-player-name">${player.name}</span><span class="pitch-player-role">${roleLabel}</span></div>`;
+    const cell = (player, roleLabel) => !player ? '' : `<div class="pitch-player ${player.captain ? 'captain' : ''}">${playerAvatar(player, player.captain ? 'captain-avatar' : '')}<span class="pitch-player-name">${player.name}</span><span class="pitch-player-role">${roleLabel}</span></div>`;
     return `<div class="pitch-row">${cell(st, 'ST')}</div><div class="pitch-row">${cell(amf, 'AMF')}${cell(cb, 'CB')}</div><div class="pitch-row">${cell(gk, 'GK')}</div>`;
   }
 
@@ -638,14 +651,14 @@
 
     const koHTML = `<h2>Knockout Stage</h2>
       <div class="p-ko-grid">
-        <div class="p-ko-box"><h3>Quarter-Final 1</h3>${koMatch(r.qf1, r.qf1H, r.qf1A, 'A1', 'B4')}</div>
-        <div class="p-ko-box"><h3>Quarter-Final 2</h3>${koMatch(r.qf2, r.qf2H, r.qf2A, 'A2', 'B3')}</div>
-        <div class="p-ko-box"><h3>Quarter-Final 3</h3>${koMatch(r.qf3, r.qf3H, r.qf3A, 'B1', 'A4')}</div>
-        <div class="p-ko-box"><h3>Quarter-Final 4</h3>${koMatch(r.qf4, r.qf4H, r.qf4A, 'B2', 'A3')}</div>
-        <div class="p-ko-box"><h3>Semi-Final 1</h3>${koMatch(r.sf1, r.sf1H, r.sf1A, 'W-QF1', 'W-QF2')}</div>
-        <div class="p-ko-box"><h3>Semi-Final 2</h3>${koMatch(r.sf2, r.sf2H, r.sf2A, 'W-QF3', 'W-QF4')}</div>
+        <div class="p-ko-box"><h3>Quarter-Final 1</h3>${koMatch(r.qf1, r.qf1H, r.qf1A, 'TBD', 'TBD')}</div>
+        <div class="p-ko-box"><h3>Quarter-Final 2</h3>${koMatch(r.qf2, r.qf2H, r.qf2A, 'TBD', 'TBD')}</div>
+        <div class="p-ko-box"><h3>Quarter-Final 3</h3>${koMatch(r.qf3, r.qf3H, r.qf3A, 'TBD', 'TBD')}</div>
+        <div class="p-ko-box"><h3>Quarter-Final 4</h3>${koMatch(r.qf4, r.qf4H, r.qf4A, 'TBD', 'TBD')}</div>
+        <div class="p-ko-box"><h3>Semi-Final 1</h3>${koMatch(r.sf1, r.sf1H, r.sf1A, 'TBD', 'TBD')}</div>
+        <div class="p-ko-box"><h3>Semi-Final 2</h3>${koMatch(r.sf2, r.sf2H, r.sf2A, 'TBD', 'TBD')}</div>
       </div>
-      <div class="p-ko-box" style="margin-top:12px"><h3>🏆 Grand Final</h3>${koMatch(r.fin, r.finH, r.finA, 'W-SF1', 'W-SF2')}</div>`;
+      <div class="p-ko-box" style="margin-top:12px"><h3>🏆 Grand Final</h3>${koMatch(r.fin, r.finH, r.finA, 'TBD', 'TBD')}</div>`;
 
     const champHTML = r.champ ? `<div class="p-champ">
       <div class="trophy">🏆</div>
@@ -840,7 +853,7 @@
       showToast('Backup downloaded');
     });
 
-    /* ✅ Print button (from admin Data tab) */
+    /* Print button */
     const printBtn = $('printBtn');
     if (printBtn) printBtn.addEventListener('click', printTournament);
 
@@ -880,7 +893,6 @@
       showToast('Failed to load. Check server.');
       console.error(e);
     }
-    // Auto-refresh every 5 seconds
     setInterval(async () => {
       try {
         const fresh = await api('/api/state');
