@@ -216,13 +216,14 @@ app.post('/api/approve', auth, async (req, res) => {
   }
 });
 
+/* ✅ আপডেট করা ম্যাচ এডিট API (টিম পরিবর্তনের অনুমতি সহ) */
 app.put('/api/matches/:id', auth, async (req, res) => {
   try {
     let state = await getState();
     const m = state.matches.find(x => x.id === req.params.id);
     if (!m) return res.status(404).json({ error: 'Match not found' });
 
-    const { status, homeScore, awayScore, date, time, winnerId, scorers } = req.body || {};
+    const { status, homeScore, awayScore, date, time, winnerId, scorers, homeId, awayId } = req.body || {};
 
     if (status && ['UPCOMING', 'LIVE', 'FT'].includes(status)) m.status = status;
     if (typeof homeScore === 'number') m.homeScore = Math.max(0, Math.floor(homeScore));
@@ -230,6 +231,11 @@ app.put('/api/matches/:id', auth, async (req, res) => {
     if (date !== undefined) m.date = date;
     if (time !== undefined) m.time = time;
     if (winnerId !== undefined) m.winnerId = winnerId;
+    
+    // নতুন টিম সিলেক্ট করার লজিক
+    if (homeId !== undefined) m.homeId = homeId || null;
+    if (awayId !== undefined) m.awayId = awayId || null;
+
     if (scorers !== undefined) {
       m.scorers = Array.isArray(scorers)
         ? scorers.filter(s => s && typeof s.name === 'string' && s.name.trim())
@@ -255,22 +261,7 @@ app.post('/api/reset', auth, async (req, res) => {
   }
 });
 
-/* ═════════ SCHEDULE GENERATOR ═════════ */
-function roundRobin(ids) {
-  const arr = [...ids, null];
-  const rounds = [];
-  for (let r = 0; r < 5; r++) {
-    const pairs = [];
-    for (let i = 0; i < 3; i++) {
-      const h = arr[i], a = arr[5 - i];
-      if (h && a) pairs.push([h, a]);
-    }
-    rounds.push(pairs);
-    arr.splice(1, 0, arr.pop());
-  }
-  return rounds;
-}
-
+/* ═════════ SCHEDULE GENERATOR (AS PER NOTEBOOK IMAGE) ═════════ */
 function formatTime(slotIdx) {
   const totalMinutes = 18 * 60 + slotIdx * 15;
   const h = Math.floor(totalMinutes / 60);
@@ -279,42 +270,64 @@ function formatTime(slotIdx) {
 }
 
 function generateSchedule(groupA, groupB) {
-  const roundsA = roundRobin(groupA);
-  const roundsB = roundRobin(groupB);
   const matches = [];
   const today = new Date().toISOString().slice(0, 10);
   const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
   let n = 1, slot = 0;
 
-  // Group A: 18:00 → 20:15
-  for (let r = 0; r < 5; r++) {
-    roundsA[r].forEach((pair) => {
-      matches.push({
-        id: 'M' + String(n).padStart(2, '0'), matchNo: n++,
-        stage: 'GROUP', group: 'A', round: r + 1,
-        homeId: pair[0], awayId: pair[1],
-        date: today, time: formatTime(slot++),
-        status: 'UPCOMING', homeScore: 0, awayScore: 0,
-        scorers: [], winnerId: ''
-      });
-    });
-  }
+  // হাতের লেখা নোট অনুযায়ী Group A এর ম্যাচ
+  const groupAMatchups = [
+    ['royal', 'thunder'],
+    ['royal', 'falcon'],
+    ['royal', 'beast'],
+    ['royal', 'stricker'],
+    ['thunder', 'falcon'],
+    ['thunder', 'beast'],
+    ['thunder', 'stricker'],
+    ['falcon', 'beast'],
+    ['falcon', 'stricker'],
+    ['beast', 'stricker']
+  ];
 
-  // Group B: 20:30 → 22:45
-  for (let r = 0; r < 5; r++) {
-    roundsB[r].forEach((pair) => {
-      matches.push({
-        id: 'M' + String(n).padStart(2, '0'), matchNo: n++,
-        stage: 'GROUP', group: 'B', round: r + 1,
-        homeId: pair[0], awayId: pair[1],
-        date: today, time: formatTime(slot++),
-        status: 'UPCOMING', homeScore: 0, awayScore: 0,
-        scorers: [], winnerId: ''
-      });
-    });
-  }
+  // হাতের লেখা নোট অনুযায়ী Group B এর ম্যাচ
+  const groupBMatchups = [
+    ['eagle', 'lion'],
+    ['eagle', 'king'],
+    ['eagle', 'warrior'],
+    ['eagle', 'united'],
+    ['lion', 'king'],
+    ['lion', 'warrior'],
+    ['lion', 'united'],
+    ['king', 'warrior'],
+    ['king', 'united'],
+    ['warrior', 'united']
+  ];
 
-  // Knockout Stage (Tomorrow)
+  // Group A এর ম্যাচ তৈরি
+  groupAMatchups.forEach((pair, idx) => {
+    matches.push({
+      id: 'M' + String(n).padStart(2, '0'), matchNo: n++,
+      stage: 'GROUP', group: 'A', round: Math.floor(idx / 2) + 1,
+      homeId: pair[0], awayId: pair[1],
+      date: today, time: formatTime(slot++),
+      status: 'UPCOMING', homeScore: 0, awayScore: 0,
+      scorers: [], winnerId: ''
+    });
+  });
+
+  // Group B এর ম্যাচ তৈরি
+  groupBMatchups.forEach((pair, idx) => {
+    matches.push({
+      id: 'M' + String(n).padStart(2, '0'), matchNo: n++,
+      stage: 'GROUP', group: 'B', round: Math.floor(idx / 2) + 1,
+      homeId: pair[0], awayId: pair[1],
+      date: today, time: formatTime(slot++),
+      status: 'UPCOMING', homeScore: 0, awayScore: 0,
+      scorers: [], winnerId: ''
+    });
+  });
+
+  // নকআউট স্টেজ (কালকের জন্য)
   const koMatches = [
     { id: 'QF1', label: 'Quarter-Final 1 (A1 vs B4)', time: '18:00' },
     { id: 'QF2', label: 'Quarter-Final 2 (A2 vs B3)', time: '18:30' },
