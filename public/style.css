@@ -100,32 +100,83 @@ main{padding:16px 16px 100px;max-width:480px;margin:0 auto}
 .dot.emerald{background:var(--emerald);box-shadow:0 0 10px var(--emerald)}
 .dot.amber{background:var(--amber);box-shadow:0 0 10px var(--amber)}
 
-/* TABLE */
-.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch; border-radius: 8px;}
-.tbl-wrap::-webkit-scrollbar{height:4px}
-.tbl-wrap::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:9px}
-.tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums; text-align: left;}
-.tbl th{
-  font-size:9.5px;font-weight:800;color:var(--muted);
-  text-transform:uppercase;letter-spacing:.5px;
-  padding:8px 4px;text-align:center;
-  border-bottom:1px solid var(--stroke);
+/* ═══════════════════════════════════════════════════
+   ENHANCED HIGHLIGHTED TABLE (V3.0)
+   ═══════════════════════════════════════════════════ */
+.tbl-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--stroke);
 }
-.tbl th.tl{text-align:left;padding-left:8px}
-.tbl td{padding:10px 4px;font-size:12px;font-weight:600;text-align:center;border-bottom:1px solid rgba(255,255,255,.03)}
-.tbl tr:last-child td{border-bottom:none}
-.tbl td.tl{text-align:left;padding-left:8px}
-.tbl .club{display:flex;align-items:center;gap:8px;min-width:120px}
-.tbl .club img{width:22px;height:22px;border-radius:6px;object-fit:cover;flex-shrink:0;background:#0a1425}
-.tbl .club span{font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tbl .pos{width:16px;font-size:11px;font-weight:900;color:var(--muted);text-align:center}
-.tbl .pts{font-weight:900;color:#fff;font-size:13px}
-.tbl .gd-pos{color:#6ee7b7; font-weight: 800;}
-.tbl .gd-neg{color:#fda4af; font-weight: 800;}
-.tbl tr.qual td.tl{box-shadow:inset 3px 0 0 var(--blue)}
-.tbl tr.qual td { background: rgba(59, 130, 246, 0.03); }
-.tbl tr[data-team-id]{cursor:pointer; transition: background 0.2s;}
-.tbl tr[data-team-id]:active{background:var(--card-hover)}
+.tbl-wrap::-webkit-scrollbar { height: 4px; }
+.tbl-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 9px; }
+
+.tbl { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; text-align: left; }
+.tbl th {
+  font-size: 10px; font-weight: 900; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .8px;
+  padding: 10px 6px; text-align: center;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+.tbl th.tl { text-align: left; padding-left: 10px; }
+
+.tbl td {
+  padding: 12px 6px; font-size: 12.5px; font-weight: 700;
+  text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  transition: background 0.2s;
+}
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:hover td { background: rgba(255, 255, 255, 0.05); } /* Hover effect */
+.tbl td.tl { text-align: left; padding-left: 10px; }
+
+.tbl .club { display: flex; align-items: center; gap: 8px; min-width: 130px; }
+.tbl .club img {
+  width: 24px; height: 24px; border-radius: 6px;
+  object-fit: cover; flex-shrink: 0; background: #0a1425;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.tbl .club span { font-weight: 800; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Position Number Badge */
+.tbl .pos {
+  width: 22px; font-size: 11px; font-weight: 900;
+  color: var(--muted); text-align: center;
+  border-radius: 4px; padding: 3px 0;
+}
+
+/* Points Highlighted Badge */
+.tbl .pts {
+  font-weight: 900; color: #fff; font-size: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px 8px; border-radius: 6px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+}
+
+/* Goal Difference Colors */
+.tbl .gd-pos { color: #6ee7b7; font-weight: 800; }
+.tbl .gd-neg { color: #fda4af; font-weight: 800; }
+
+/* ═════════ QUALIFICATION HIGHLIGHTS ═════════ */
+/* পজিশন ১-২: নীল হাইলাইট (সেমিফাইনাল সম্ভাব্য) */
+.tbl tr.pos-1 td.tl, .tbl tr.pos-2 td.tl { box-shadow: inset 4px 0 0 #3b82f6; }
+.tbl tr.pos-1 td, .tbl tr.pos-2 td { background: rgba(59, 130, 246, 0.08); }
+.tbl tr.pos-1 .pos { color: #3b82f6; background: rgba(59,130,246,0.2); }
+.tbl tr.pos-2 .pos { color: #60a5fa; background: rgba(59,130,246,0.1); }
+
+/* পজিশন ৩-৪: সবুজ হাইলাইট (কোয়ার্টার ফাইনাল কোয়ালিফাই) */
+.tbl tr.pos-3 td.tl, .tbl tr.pos-4 td.tl { box-shadow: inset 4px 0 0 #10b981; }
+.tbl tr.pos-3 td, .tbl tr.pos-4 td { background: rgba(16, 185, 129, 0.05); }
+.tbl tr.pos-3 .pos { color: #10b981; background: rgba(16,185,129,0.2); }
+.tbl tr.pos-4 .pos { color: #34d399; background: rgba(16,185,129,0.1); }
+
+/* পজিশন ৫: লাল হাইলাইট (এলিমিনেট) */
+.tbl tr.pos-5 td.tl { box-shadow: inset 4px 0 0 #ef4444; }
+.tbl tr.pos-5 td { background: rgba(239, 68, 68, 0.05); opacity: 0.8; }
+.tbl tr.pos-5 .pos { color: #ef4444; background: rgba(239,68,68,0.15); }
 
 /* TOP SCORERS */
 .scorer-row { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-bottom: 1px solid var(--stroke); }
